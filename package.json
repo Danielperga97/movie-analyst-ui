@@ -4,7 +4,7 @@
   "description": "ui for the movie analyst website....im totally not ripping this off.......",
   "scripts": {
     "test": "mocha",
-    "start": "node server.js 2>&1 | sudo tee /logs"
+    "start": "node server.js 2>&1 |  tee /logs"
   },
   "repository": {
     "type": "git",
