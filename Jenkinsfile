@@ -38,15 +38,15 @@ pipeline {
                     """
                 sh 'echo -------------------Account configured ------------------'
                 sh '/usr/bin/curl -o /tmp/front-dockerfile/dockerfile https://raw.githubusercontent.com/Danielperga97/myDevopsRampUp/develop/containers/frontend/dockerfile'
-                sh "docker build -t gcr.io/ramp-up-247818/movie-analyst-ui:${env.BUILD_NUMBER} /tmp/front-dockerfile/"
+                sh "docker build --no-cache -t gcr.io/ramp-up-247818/movie-analyst-ui:${env.BUILD_NUMBER} /tmp/front-dockerfile/"
                 sh "docker tag gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER} gcr.io/ramp-up-247818/movie-analyst-ui:latest"
                 sh "gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}"
                 sh 'gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:latest'
                 sh  '''   
                 #!/bin/bash 
-                docker image prune -a
+                docker system prune -a -f;
                 gcloud container clusters get-credentials gke-cluster-1 --zone us-east1-b;
-                /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:latest;
+                /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}
                 '''
 
             }
