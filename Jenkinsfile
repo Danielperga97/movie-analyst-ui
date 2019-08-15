@@ -2,7 +2,7 @@
 node {
 	
     stage('Clone sources') {
-        git url: 'https://github.com/danielperga7/movie-analyst-ui.git'
+        git url: 'https://github.com/danielperga97/movie-analyst-ui.git'
     }
     stage ('build') {
    	sh 'npm install'
