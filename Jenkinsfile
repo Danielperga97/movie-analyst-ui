@@ -1,25 +1,18 @@
-pipeline {
-    agent any
-    environment {
-        GOOGLE_PROJECT_ID = 'ramp-up-247818';
-        GOOGLE_SERVICE_ACCOUNT_KEY = credentials('JENKINS_SERVICE_ACCOUNT');
-        HOME = '.'
-    }
-   
-    stages {
-        stage('build') {
-            steps {
-                sh 'npm install'
-            }
-        }
-        stage('test') {
-            steps {
-                sh 'npm test'
-            }
-        }
-        stage('deploy') {
-            steps {
-                sh 'echo ------------------setting up google cloud ------------------'
+stage "build"
+node {
+    sh 'npm install'
+}
+stage "test"
+node {
+    sh 'npm test'
+}
+stage "deploy"
+
+node {
+    withEnv(["GOOGLE_PROJECT_ID = ramp-up-247818","HOME=."]){
+    withCredentials([file(credentialsId: 'JENKINS_SERVICE_ACCOUNT', variable: 'GOOGLE_SERVICE_ACCOUNT_KEY')])
+    {
+         sh 'echo ------------------setting up google cloud ------------------'
 
                  sh """
         	        #!/bin/bash
@@ -48,9 +41,9 @@ pipeline {
                 gcloud container clusters get-credentials gke-cluster-1 --zone us-east1-b;
                 /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}
                 '''
-
-            }
-        }
     }
+    }
+    
 }
+
 
