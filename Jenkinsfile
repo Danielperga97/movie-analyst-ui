@@ -34,6 +34,9 @@ node {
                 sh '/usr/bin/curl -o /tmp/front-dockerfile/dockerfile https://raw.githubusercontent.com/Danielperga97/myDevopsRampUp/develop/containers/frontend/dockerfile'
                 sh "docker build --no-cache -t gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} /tmp/front-dockerfile/"
                 sh "docker tag gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} gcr.io/ramp-up-247818/movie-analyst-ui:latest"
+	    	def imageLine = 'gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}'
+  		writeFile file: 'anchore_images', text: imageLine
+  		anchore name: 'anchore_images'
                 sh "gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER}"
                 sh 'gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:latest'
                 sh  '''   
