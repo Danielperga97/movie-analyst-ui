@@ -1,17 +1,18 @@
-stage "build"
-node {
-    sh 'npm install'
-}
-stage "test"
-node {
-    sh 'npm test'
-}
-stage "deploy"
 
 node {
+	
+    stage('Clone sources') {
+        git url: 'https://github.com/danielperga7/movie-analyst-ui.git'
+    }
+    stage ('build') {
+   	sh 'npm install'
+    }
+    stage ('test') {
+    	sh 'npm test'
+    }
+	stage ('deploy'){
     withEnv(["GOOGLE_PROJECT_ID = ramp-up-247818","HOME=."]){
-    withCredentials([file(credentialsId: 'JENKINS_SERVICE_ACCOUNT', variable: 'GOOGLE_SERVICE_ACCOUNT_KEY')])
-    {
+    withCredentials([file(credentialsId: 'JENKINS_SERVICE_ACCOUNT', variable: 'GOOGLE_SERVICE_ACCOUNT_KEY')]) {
          sh 'echo ------------------setting up google cloud ------------------'
 
                  sh """
@@ -41,7 +42,7 @@ node {
                 gcloud container clusters get-credentials gke-cluster-1 --zone us-east1-b;
                 /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}
                 '''
-    }
+    }}
     }
     
 }
