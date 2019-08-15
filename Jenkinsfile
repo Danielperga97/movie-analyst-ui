@@ -32,7 +32,6 @@ node {
                     """
                 sh 'echo -------------------Account configured ------------------'
                 sh '/usr/bin/curl -o /tmp/front-dockerfile/dockerfile https://raw.githubusercontent.com/Danielperga97/myDevopsRampUp/develop/containers/frontend/dockerfile'
-	        sh 'sysctl -w net.ipv4.ip_forward=1'
                 sh "docker build --no-cache -t gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} /tmp/front-dockerfile/"
                 sh "docker tag gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} gcr.io/ramp-up-247818/movie-analyst-ui:latest"
                 sh "gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER}"
