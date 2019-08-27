@@ -1,25 +1,19 @@
-pipeline {
-    agent any
-    environment {
-        GOOGLE_PROJECT_ID = 'ramp-up-247818';
-        GOOGLE_SERVICE_ACCOUNT_KEY = credentials('JENKINS_SERVICE_ACCOUNT');
-        HOME = '.'
+
+node {
+	
+    stage('Clone sources') {
+        git url: 'https://github.com/danielperga97/movie-analyst-ui.git'
     }
-   
-    stages {
-        stage('build') {
-            steps {
-                sh 'npm install'
-            }
-        }
-        stage('test') {
-            steps {
-                sh 'npm test'
-            }
-        }
-        stage('deploy') {
-            steps {
-                sh 'echo ------------------setting up google cloud ------------------'
+    stage ('build') {
+   	sh 'npm install'
+    }
+    stage ('test') {
+    	sh 'npm test'
+    }
+	stage ('deploy'){
+    withEnv(["GOOGLE_PROJECT_ID=ramp-up-247818","HOME=."]){
+    withCredentials([file(credentialsId: 'JENKINS_SERVICE_ACCOUNT', variable: 'GOOGLE_SERVICE_ACCOUNT_KEY')]) {
+         sh 'echo ------------------setting up google cloud ------------------'
 
                  sh """
         	        #!/bin/bash
@@ -27,30 +21,33 @@ pipeline {
                     tar -xvf /tmp/google-cloud-sdk.tar.gz -C /home/jenkins/;
 		            /home/jenkins/google-cloud-sdk/install.sh -q;
                     source /home/jenkins/google-cloud-sdk/path.bash.inc;
-			        gcloud config set project ${GOOGLE_PROJECT_ID};
+			        gcloud config set project \${GOOGLE_PROJECT_ID};
 			        gcloud components install kubectl;
                     PATH=$PATH:/home/jenkins/google-cloud-sdk/bin
                     source /home/jenkins/google-cloud-sdk/path.bash.inc;
-                    [[ ":$PATH:" != *":/home/jenkins/google-cloud-sdk/bin:"* ]] && PATH="/home/jenkins/google-cloud-sdk/bin:${PATH}"
+                    [[ ":$PATH:" != *":/home/jenkins/google-cloud-sdk/bin:"* ]] && PATH="/home/jenkins/google-cloud-sdk/bin:\${PATH}"
                     echo $PATH
-			        gcloud auth activate-service-account --key-file ${GOOGLE_SERVICE_ACCOUNT_KEY};
+			        gcloud auth activate-service-account --key-file \${GOOGLE_SERVICE_ACCOUNT_KEY};
                     gcloud components update
                     """
                 sh 'echo -------------------Account configured ------------------'
                 sh '/usr/bin/curl -o /tmp/front-dockerfile/dockerfile https://raw.githubusercontent.com/Danielperga97/myDevopsRampUp/develop/containers/frontend/dockerfile'
-                sh "docker build --no-cache -t gcr.io/ramp-up-247818/movie-analyst-ui:${env.BUILD_NUMBER} /tmp/front-dockerfile/"
-                sh "docker tag gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER} gcr.io/ramp-up-247818/movie-analyst-ui:latest"
-                sh "gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}"
+                sh "docker build --no-cache -t gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} /tmp/front-dockerfile/"
+                sh "docker tag gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER} gcr.io/ramp-up-247818/movie-analyst-ui:latest"
+                sh "gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER}"
                 sh 'gcloud docker -- push  gcr.io/ramp-up-247818/movie-analyst-ui:latest'
+	    	def imageLine = 'gcr.io/ramp-up-247818/movie-analyst-ui:latest'
+  		writeFile file: 'anchore_images', text: imageLine
+  		anchore name: 'anchore_images'
                 sh  '''   
                 #!/bin/bash 
                 docker system prune -a -f;
                 gcloud container clusters get-credentials gke-cluster-1 --zone us-east1-b;
-                /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:${BUILD_NUMBER}
+                /home/jenkins/google-cloud-sdk/bin/kubectl set image deployment.apps/movie-analyst-ui movie-analyst-ui=gcr.io/ramp-up-247818/movie-analyst-ui:\${BUILD_NUMBER}
                 '''
-
-            }
-        }
+    }}
     }
+    
 }
+
 
